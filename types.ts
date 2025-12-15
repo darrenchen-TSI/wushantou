@@ -1,8 +1,11 @@
 export interface ReservoirRtInfo {
+  ReservoirName: string; // Added from XML
+  DateTime: string;      // Added from XML
   WaterLevel: number;
   Volume: number;
   VolumeRate: number; // In percentage (0-100)
   Turbidity: number;
+  AverageHourRainQty: number; // Added from XML
   AverageDayRainQty: number;
 }
 
@@ -19,12 +22,14 @@ export interface AlarmStationInfo {
 }
 
 export interface EvapRainInfo {
+  InfoTime: string; // Added from XML
   Evaporation: number;
   EastSideRainQty: number;
   WestSideRainQty: number;
   WeirBodyRainQty: number;
   WaterSupplyRainQty: number;
   OfficeRainQty: number;
+  AverageRainQty: number; // Weighted average from XML
 }
 
 export type StatusType = 'Normal' | 'Door';
