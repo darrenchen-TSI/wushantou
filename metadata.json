@@ -1,0 +1,5 @@
+{
+  "name": "Wushantou Reservoir Dashboard",
+  "description": "Real-time monitoring dashboard for Wushantou Reservoir including water levels, alarm station status, and rainfall data.",
+  "requestFramePermissions": []
+}
