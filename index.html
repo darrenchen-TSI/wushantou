@@ -9,7 +9,39 @@
     <style>
       body {
         font-family: 'Inter', sans-serif;
-        background-color: #f1f5f9;
+        background-color: #f8fafc;
+      }
+      
+      /* Wave Animation Keyframes */
+      @keyframes drift {
+        from { transform: rotate(0deg); }
+        from { transform: rotate(360deg); }
+      }
+      .wave {
+        position: absolute;
+        opacity: 0.4;
+        width: 120%; /* Increased width */
+        height: 120%; /* Increased height */
+        top: -20%;    /* Adjust position */
+        left: -10%;
+        background: #ffffff;
+        border-radius: 40%;
+        animation: drift 10s infinite linear;
+      }
+      .wave.-three {
+        animation: drift 10s infinite linear;
+        opacity: 0.1;
+        background: #e0f2fe; /* light blue */
+      }
+      .wave.-two {
+        animation: drift 14s infinite linear;
+        opacity: 0.2;
+        background: #bae6fd;
+      }
+      .box {
+        position: relative;
+        overflow: hidden;
+        transform: translate3d(0, 0, 0);
       }
     </style>
   <script type="importmap">
@@ -26,5 +58,6 @@
 </head>
   <body>
     <div id="root"></div>
+    <script type="module" src="./index.tsx"></script>
   </body>
 </html>

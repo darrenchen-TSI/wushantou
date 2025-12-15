@@ -37,18 +37,18 @@ const MOCK_RESERVOIR: ReservoirRtInfo = {
   VolumeRate: 80.29,
   Turbidity: 30,
   AverageHourRainQty: 0,
-  AverageDayRainQty: 0,
+  AverageDayRainQty: 12.5,
 };
 
 const MOCK_RAIN: EvapRainInfo = {
   InfoTime: new Date().toISOString(),
   Evaporation: 0.21,
-  EastSideRainQty: 0,
-  WestSideRainQty: 0,
+  EastSideRainQty: 2.5,
+  WestSideRainQty: 1.0,
   WeirBodyRainQty: 0,
-  WaterSupplyRainQty: 0,
+  WaterSupplyRainQty: 5.0,
   OfficeRainQty: 0,
-  AverageRainQty: 0,
+  AverageRainQty: 1.2,
 };
 
 const MOCK_ALARMS: AlarmStationInfo[] = [
@@ -92,8 +92,8 @@ export const fetchDashboardData = async (): Promise<{
   alarms: AlarmStationInfo[];
   rain: EvapRainInfo;
 }> => {
-  // Prevent Mixed Content errors (HTTPS page requesting HTTP API)
-  // This is common in hosted environments (Vercel/GitHub Pages) or even local localhost sometimes.
+  // 1. Mixed Content Check (HTTPS vs HTTP)
+  // Most browsers strictly block this, so we fail fast to mock data.
   const isHttps = typeof window !== 'undefined' && window.location.protocol === 'https:';
   const isApiHttp = RESERVOIR_API.startsWith('http:');
   
@@ -103,14 +103,13 @@ export const fetchDashboardData = async (): Promise<{
   }
 
   try {
-    // Attempt to fetch live data
-    // Use signal/timeout to prevent hanging requests
+    // 2. Fetch with Timeout
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 5000); // 5s timeout
+    const timeoutId = setTimeout(() => controller.abort(), 3000); // 3s timeout is enough to know if it's blocked
 
     const fetchOptions = { 
       method: 'GET', 
-      mode: 'cors' as RequestMode,
+      mode: 'cors' as RequestMode, // Try CORS
       signal: controller.signal
     };
 
@@ -130,25 +129,25 @@ export const fetchDashboardData = async (): Promise<{
     const [resText, alarmText, rainText] = await Promise.all([resPromise, alarmPromise, rainPromise]);
     clearTimeout(timeoutId);
 
-    // 1. Parse Reservoir
+    // 3. Parse Data
     const resXml = parseXml(resText);
-    if (!resXml) throw new Error("Failed to parse Reservoir XML");
+    const alarmXml = parseXml(alarmText);
+    const rainXml = parseXml(rainText);
 
+    if (!resXml || !alarmXml || !rainXml) throw new Error("XML Parse failed");
+
+    // ... (Parsing Logic) ...
     const rawRate = getNumber(resXml, "VolumeRate");
     const reservoir: ReservoirRtInfo = {
       ReservoirName: getText(resXml, "ReservoirName"),
       DateTime: getText(resXml, "DateTime"),
       WaterLevel: getNumber(resXml, "WaterLevel"),
       Volume: getNumber(resXml, "Volume"),
-      VolumeRate: rawRate > 1 ? rawRate : rawRate * 100, // Handle cases where API might return % or decimal
+      VolumeRate: rawRate > 1 ? rawRate : rawRate * 100, 
       Turbidity: getNumber(resXml, "Turbidity"),
       AverageHourRainQty: getNumber(resXml, "AverageHourRainQty"),
       AverageDayRainQty: getNumber(resXml, "AverageDayRainQty"),
     };
-
-    // 2. Parse Alarms
-    const alarmXml = parseXml(alarmText);
-    if (!alarmXml) throw new Error("Failed to parse Alarm XML");
 
     const stationNodes = alarmXml.getElementsByTagName("AlarmStationInfo");
     const alarms: AlarmStationInfo[] = Array.from(stationNodes).map((node) => ({
@@ -162,10 +161,6 @@ export const fetchDashboardData = async (): Promise<{
       Amp: getText(node, "Amp"),
       Trumpet: getText(node, "Trumpet"),
     }));
-
-    // 3. Parse Rain
-    const rainXml = parseXml(rainText);
-    if (!rainXml) throw new Error("Failed to parse Rain XML");
 
     const rain: EvapRainInfo = {
       InfoTime: getText(rainXml, "InfoTime"),
@@ -181,11 +176,8 @@ export const fetchDashboardData = async (): Promise<{
     return { reservoir, alarms, rain };
 
   } catch (error) {
-    console.warn("Live data fetch failed (CORS, Network, or Parse Error). Using Mock Data for visualization.", error);
-    
-    // Simulate network delay for realism if it failed immediately
-    await new Promise(resolve => setTimeout(resolve, 500));
-
+    console.warn("Live data fetch failed (CORS/Network/Timeout). Using Mock Data.", error);
+    // Return mock data immediately to avoid "Failed to fetch" error screen
     return {
       reservoir: MOCK_RESERVOIR,
       alarms: MOCK_ALARMS,

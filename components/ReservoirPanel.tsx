@@ -8,120 +8,141 @@ interface ReservoirPanelProps {
 }
 
 export const ReservoirPanel: React.FC<ReservoirPanelProps> = ({ data, evaporation }) => {
+  // Ensure percentage is between 0 and 100
+  const percentage = Math.min(Math.max(data.VolumeRate, 0), 100);
+  
+  // Calculate wave height (inverse logic: if full 100%, wave is at top 0%)
+  const waveTop = 100 - percentage;
+
   return (
-    <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
-      <div className="p-6 border-b border-slate-100 bg-slate-50 flex justify-between items-center">
+    <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden flex flex-col h-full">
+      <div className="p-5 border-b border-slate-100 bg-slate-50 flex flex-wrap justify-between items-center gap-2">
         <h2 className="text-xl font-bold text-slate-800 flex items-center gap-2">
           <Waves className="w-6 h-6 text-blue-600" />
-          {data.ReservoirName || "烏山頭水庫"}即時水情
+          {data.ReservoirName || "烏山頭水庫"}
         </h2>
         {data.DateTime && (
-           <div className="flex items-center gap-1 text-xs text-slate-500 bg-white px-2 py-1 rounded border border-slate-200">
+           <div className="flex items-center gap-1.5 text-xs font-mono text-slate-500 bg-white px-2.5 py-1 rounded-full border border-slate-200 shadow-sm">
               <Clock className="w-3 h-3" />
-              <span>資料時間: {data.DateTime.replace('T', ' ')}</span>
+              <span>{data.DateTime.replace('T', ' ')}</span>
            </div>
         )}
       </div>
 
-      <div className="p-6 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+      <div className="p-6 grid grid-cols-1 md:grid-cols-2 gap-6 flex-grow">
         
-        {/* Main Water Level Card */}
-        <div className="col-span-1 md:col-span-2 bg-blue-600 rounded-2xl p-6 text-white relative overflow-hidden flex flex-col justify-between min-h-[160px]">
-          <div className="absolute top-0 right-0 -mr-8 -mt-8 w-32 h-32 bg-white/10 rounded-full blur-2xl"></div>
-          <div className="absolute bottom-0 left-0 -ml-8 -mb-8 w-32 h-32 bg-blue-400/20 rounded-full blur-2xl"></div>
-          
-          <div className="relative z-10">
-            <div className="flex justify-between items-start">
-              <div>
-                <p className="text-blue-100 text-sm font-medium mb-1">目前水位 (Water Level)</p>
-                <div className="text-5xl font-bold tracking-tight">
-                  {data.WaterLevel.toFixed(2)}
-                  <span className="text-2xl font-normal text-blue-200 ml-2">m</span>
+        {/* Animated Water Tank Card */}
+        <div className="col-span-1 relative bg-gradient-to-b from-blue-50 to-blue-100 rounded-2xl overflow-hidden shadow-inner border border-blue-100 min-h-[280px] box group">
+            {/* Water Background */}
+            <div 
+                className="absolute left-0 right-0 bottom-0 bg-gradient-to-t from-blue-600 to-blue-400 transition-all duration-1000 ease-in-out"
+                style={{ height: `${percentage}%` }}
+            ></div>
+
+            {/* Waves CSS Animation */}
+            <div 
+                className="absolute left-0 right-0 w-[200%] h-[200%] transition-all duration-1000 ease-in-out"
+                style={{ top: `-${percentage + 5}%` }} 
+            >
+                <div className="wave -three"></div>
+                <div className="wave -two"></div>
+                <div className="wave"></div>
+            </div>
+
+            {/* Content Overlay */}
+            <div className="relative z-10 h-full flex flex-col justify-between p-6">
+                <div className="flex justify-between items-start">
+                    <div className="bg-white/90 backdrop-blur-sm p-3 rounded-xl shadow-lg border border-white/50">
+                         <p className="text-blue-900 text-xs font-bold uppercase tracking-wider mb-1">目前水位</p>
+                         <div className="flex items-baseline gap-1">
+                            <span className="text-3xl font-black text-blue-700">{data.WaterLevel.toFixed(2)}</span>
+                            <span className="text-sm font-medium text-blue-500">m</span>
+                         </div>
+                    </div>
+                    <div className="bg-white/20 backdrop-blur-md p-2 rounded-full border border-white/30 text-white shadow-sm">
+                        <Droplet className="w-6 h-6" />
+                    </div>
                 </div>
-              </div>
-              <div className="bg-white/20 p-2 rounded-lg backdrop-blur-sm">
-                <Droplet className="w-8 h-8 text-white" />
-              </div>
+
+                <div className="text-center">
+                    <div className="inline-block bg-white/95 backdrop-blur shadow-xl rounded-2xl px-8 py-4 border border-blue-100">
+                        <p className="text-slate-400 text-xs font-semibold uppercase mb-1">蓄水百分比</p>
+                        <p className="text-5xl font-black text-blue-600 tracking-tight">
+                            {percentage.toFixed(1)}<span className="text-2xl ml-1 text-blue-400">%</span>
+                        </p>
+                    </div>
+                </div>
             </div>
-            
-            <div className="mt-6">
-              <div className="flex justify-between text-sm mb-2 text-blue-100">
-                <span>蓄水百分比</span>
-                <span className="font-bold">{data.VolumeRate.toFixed(2)}%</span>
-              </div>
-              <div className="w-full bg-blue-900/30 rounded-full h-3 backdrop-blur-sm">
-                <div 
-                  className="bg-white h-3 rounded-full transition-all duration-1000 ease-out shadow-[0_0_10px_rgba(255,255,255,0.5)]"
-                  style={{ width: `${Math.min(data.VolumeRate, 100)}%` }}
-                />
-              </div>
-            </div>
-          </div>
         </div>
 
-        {/* Stats Grid */}
-        <div className="col-span-1 md:col-span-2 grid grid-cols-2 gap-4">
+        {/* Right Side Stats Grid */}
+        <div className="col-span-1 grid grid-cols-2 gap-4">
             {/* Effective Volume */}
-            <div className="bg-slate-50 rounded-xl p-4 border border-slate-100 flex flex-col justify-center">
-              <p className="text-slate-500 text-sm font-medium mb-1">有效蓄水量</p>
-              <p className="text-2xl font-bold text-slate-800">
-                {data.Volume.toLocaleString(undefined, { minimumFractionDigits: 1, maximumFractionDigits: 1 })}
-                <span className="text-sm font-normal text-slate-500 ml-1">萬立方公尺</span>
-              </p>
+            <div className="col-span-2 bg-white rounded-xl p-5 border border-slate-100 shadow-sm flex flex-col justify-center hover:shadow-md transition-shadow">
+              <p className="text-slate-500 text-xs font-bold uppercase tracking-wider mb-2">有效蓄水量</p>
+              <div className="flex items-baseline gap-2">
+                <p className="text-3xl font-bold text-slate-800">
+                    {data.Volume.toLocaleString(undefined, { minimumFractionDigits: 1, maximumFractionDigits: 1 })}
+                </p>
+                <span className="text-xs font-medium text-slate-400 bg-slate-100 px-2 py-0.5 rounded">萬 m³</span>
+              </div>
+            </div>
+
+            {/* Rain Stats */}
+            <div className="bg-white rounded-xl p-4 border border-slate-100 shadow-sm hover:shadow-md transition-shadow">
+                <div className="flex items-center gap-2 mb-2">
+                  <div className="p-1.5 bg-cyan-50 rounded-md">
+                    <CloudRain className="w-4 h-4 text-cyan-600" />
+                  </div>
+                  <p className="text-slate-500 text-xs font-bold">日雨量</p>
+                </div>
+                <p className="text-xl font-bold text-slate-800">
+                  {data.AverageDayRainQty.toFixed(1)}
+                  <span className="text-xs font-normal text-slate-400 ml-1">mm</span>
+                </p>
+            </div>
+
+             <div className="bg-white rounded-xl p-4 border border-slate-100 shadow-sm hover:shadow-md transition-shadow">
+                <div className="flex items-center gap-2 mb-2">
+                  <div className="p-1.5 bg-blue-50 rounded-md">
+                    <CloudRain className="w-4 h-4 text-blue-500" />
+                  </div>
+                  <p className="text-slate-500 text-xs font-bold">時雨量</p>
+                </div>
+                <p className="text-xl font-bold text-slate-800">
+                  {data.AverageHourRainQty.toFixed(1)}
+                  <span className="text-xs font-normal text-slate-400 ml-1">mm</span>
+                </p>
             </div>
 
             {/* Turbidity */}
-            <div className="bg-slate-50 rounded-xl p-4 border border-slate-100 flex flex-col justify-center">
-              <div className="flex items-center gap-2 mb-1">
-                <Activity className="w-4 h-4 text-orange-500" />
-                <p className="text-slate-500 text-sm font-medium">濁度 (Turbidity)</p>
+            <div className="bg-white rounded-xl p-4 border border-slate-100 shadow-sm hover:shadow-md transition-shadow">
+              <div className="flex items-center gap-2 mb-2">
+                <div className="p-1.5 bg-orange-50 rounded-md">
+                    <Activity className="w-4 h-4 text-orange-500" />
+                </div>
+                <p className="text-slate-500 text-xs font-bold">濁度</p>
               </div>
-              <p className="text-2xl font-bold text-slate-800">
+              <p className="text-xl font-bold text-slate-800">
                 {data.Turbidity.toFixed(0)}
-                <span className="text-sm font-normal text-slate-500 ml-1">NTU</span>
+                <span className="text-xs font-normal text-slate-400 ml-1">NTU</span>
               </p>
             </div>
 
-             {/* Rain Stats Container */}
-             <div className="col-span-2 grid grid-cols-2 gap-4">
-               {/* Avg Day Rain */}
-               <div className="bg-slate-50 rounded-xl p-4 border border-slate-100 flex flex-col justify-center">
-                <div className="flex items-center gap-2 mb-1">
-                  <CloudRain className="w-4 h-4 text-cyan-500" />
-                  <p className="text-slate-500 text-sm font-medium">日雨量</p>
-                </div>
-                <p className="text-2xl font-bold text-slate-800">
-                  {data.AverageDayRainQty.toFixed(1)}
-                  <span className="text-sm font-normal text-slate-500 ml-1">mm</span>
-                </p>
-              </div>
-
-               {/* Avg Hour Rain */}
-               <div className="bg-slate-50 rounded-xl p-4 border border-slate-100 flex flex-col justify-center">
-                <div className="flex items-center gap-2 mb-1">
-                  <CloudRain className="w-4 h-4 text-blue-400" />
-                  <p className="text-slate-500 text-sm font-medium">時雨量</p>
-                </div>
-                <p className="text-2xl font-bold text-slate-800">
-                  {data.AverageHourRainQty.toFixed(1)}
-                  <span className="text-sm font-normal text-slate-500 ml-1">mm</span>
-                </p>
-              </div>
-             </div>
-
             {/* Evaporation */}
-            <div className="bg-slate-50 rounded-xl p-4 border border-slate-100 flex flex-col justify-center col-span-2">
-              <div className="flex items-center gap-2 mb-1">
-                <Sun className="w-4 h-4 text-amber-500" />
-                <p className="text-slate-500 text-sm font-medium">蒸發量 (Evaporation)</p>
+            <div className="bg-white rounded-xl p-4 border border-slate-100 shadow-sm hover:shadow-md transition-shadow">
+              <div className="flex items-center gap-2 mb-2">
+                <div className="p-1.5 bg-amber-50 rounded-md">
+                    <Sun className="w-4 h-4 text-amber-500" />
+                </div>
+                <p className="text-slate-500 text-xs font-bold">蒸發量</p>
               </div>
-              <p className="text-2xl font-bold text-slate-800">
+              <p className="text-xl font-bold text-slate-800">
                 {evaporation !== undefined ? evaporation.toFixed(2) : '--'}
-                <span className="text-sm font-normal text-slate-500 ml-1">mm</span>
+                <span className="text-xs font-normal text-slate-400 ml-1">mm</span>
               </p>
             </div>
         </div>
-
       </div>
     </div>
   );
